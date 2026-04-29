@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/microservice
+    username: postgres
+    password: 123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      baseline-on-migrate: true
+
+server:
+  port: 8080
+
+integrations:
+  product-client:
+    url: "http://localhost:8081/v1/api/products"
+    connect-timeout: 1s
+    read-timeout: 30s
+
