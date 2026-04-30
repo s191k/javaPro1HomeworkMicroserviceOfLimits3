@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Table(name="user_limits")
 public class UserLimit {
