@@ -3,6 +3,7 @@ package org.example.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.config.GlobalSettingsProperties;
+import org.example.dto.LimitResponse;
 import org.example.entities.LimitReservation;
 import org.example.entities.UserLimit;
 import org.example.enums.ReservationStatus;
@@ -25,7 +26,7 @@ public class LimitService {
     private final LimitReservationRepository reservationRepository;
     private final GlobalSettingsProperties globalSettingsProperties;
 
-    public LimitService(UserLimitRepository userLimitRepository, LimitReservationRepository reservationRepository,  GlobalSettingsProperties globalSettingsProperties) {
+    public LimitService(UserLimitRepository userLimitRepository, LimitReservationRepository reservationRepository, GlobalSettingsProperties globalSettingsProperties) {
         this.userLimitRepository = userLimitRepository;
         this.reservationRepository = reservationRepository;
         this.globalSettingsProperties = globalSettingsProperties;
@@ -80,6 +81,16 @@ public class LimitService {
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
         userLimitRepository.cancel(reservation.getUserId(), reservation.getAmount());
+    }
+
+    @Transactional
+    public LimitResponse getBalance(Long userId) {
+        return userLimitRepository.findById(userId)
+                .map(u -> new LimitResponse(u.getId(), u.getAvailableBalance(), u.getReservedSum()))
+                .orElseGet(() -> {
+                    this.reserve(userId, BigDecimal.ZERO, UUID.randomUUID());
+                    return getBalance(userId);
+                });
     }
 
 }

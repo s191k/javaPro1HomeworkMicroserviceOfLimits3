@@ -8,8 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.example.config.GlobalSettingsProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import java.math.BigDecimal;
 

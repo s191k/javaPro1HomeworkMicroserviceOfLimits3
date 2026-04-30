@@ -44,12 +44,7 @@ public class LimitController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<LimitResponse> getBalance(@PathVariable Long userId) {
-        return userLimitRepository.findById(userId)
-                .map(u -> ResponseEntity.ok(new LimitResponse(u.getId(), u.getAvailableBalance(), u.getReservedSum())))
-                .orElseGet(() -> {
-                    limitService.reserve(userId, BigDecimal.ZERO, UUID.randomUUID());
-                    return getBalance(userId);
-                });
+    public LimitResponse getBalance(@PathVariable Long userId) {
+        return limitService.getBalance(userId);
     }
 }
