@@ -37,7 +37,7 @@ public class LimitService {
     @Transactional
     public void reserve(ReserveRequest reserveRequest) {
 
-        if (reservationRepository.existsById(reserveRequest.operationId())) {
+        if (!reservationRepository.existsById(reserveRequest.operationId())) {
             throw new OperationDoesntExist("нет операции с UUID", reserveRequest.operationId());
         }
 
