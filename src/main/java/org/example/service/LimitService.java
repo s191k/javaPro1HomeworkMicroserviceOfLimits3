@@ -2,14 +2,13 @@ package org.example.service;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.example.entities.GlobalSettings;
+import org.example.config.GlobalSettingsProperties;
 import org.example.entities.LimitReservation;
 import org.example.entities.UserLimit;
 import org.example.enums.ReservationStatus;
 import org.example.errors.NotEnoughMoney;
 import org.example.errors.OperationDoesntExist;
 import org.example.errors.ReservationWrongStatus;
-import org.example.repository.GlobalSettingsRepository;
 import org.example.repository.LimitReservationRepository;
 import org.example.repository.UserLimitRepository;
 import org.springframework.stereotype.Service;
@@ -24,12 +23,12 @@ public class LimitService {
 
     private final UserLimitRepository userLimitRepository;
     private final LimitReservationRepository reservationRepository;
-    private final GlobalSettingsRepository settingsRepository;
+    private final GlobalSettingsProperties globalSettingsProperties;
 
-    public LimitService(UserLimitRepository userLimitRepository, LimitReservationRepository reservationRepository, GlobalSettingsRepository settingsRepository) {
+    public LimitService(UserLimitRepository userLimitRepository, LimitReservationRepository reservationRepository,  GlobalSettingsProperties globalSettingsProperties) {
         this.userLimitRepository = userLimitRepository;
         this.reservationRepository = reservationRepository;
-        this.settingsRepository = settingsRepository;
+        this.globalSettingsProperties = globalSettingsProperties;
     }
 
     @Transactional
@@ -41,7 +40,7 @@ public class LimitService {
 
         UserLimit user = userLimitRepository.findById(userId)
                 .orElseGet(() -> {
-                    BigDecimal defaultLimit = getDefaultLimit();
+                    BigDecimal defaultLimit = globalSettingsProperties.getDefaultLimitValue();
                     return userLimitRepository.save(new UserLimit(userId, defaultLimit, BigDecimal.ZERO));
                 });
 
@@ -81,12 +80,6 @@ public class LimitService {
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
         userLimitRepository.cancel(reservation.getUserId(), reservation.getAmount());
-    }
-
-    private BigDecimal getDefaultLimit() {
-        return settingsRepository.findById("DEFAULT_LIMIT_VALUE")
-                .map(GlobalSettings::getSettingValue)
-                .orElse(new BigDecimal("100000.00"));
     }
 
 }

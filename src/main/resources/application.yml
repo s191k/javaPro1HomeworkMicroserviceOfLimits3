@@ -18,3 +18,5 @@ integrations:
     connect-timeout: 1s
     read-timeout: 30s
 
+default-values:
+    DEFAULT_LIMIT_VALUE: 100000.00

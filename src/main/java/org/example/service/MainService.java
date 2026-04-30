@@ -10,10 +10,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MainService implements CommandLineRunner {
 
-
     @Override
     public void run(String... args) {
-
     }
 
 }

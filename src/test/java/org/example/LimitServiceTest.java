@@ -1,7 +1,6 @@
 package org.example;
 
 import jakarta.transaction.Transactional;
-import org.example.repository.UserLimitRepository;
 import org.example.service.LimitService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +17,6 @@ class LimitServiceTest {
 
     @Autowired
     private LimitService limitService;
-
-    @Autowired
-    private UserLimitRepository userLimitRepository;
 
     @Test
     void shouldThrowExceptionWhenNotEnoughLimit() {
