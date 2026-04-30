@@ -11,6 +11,7 @@ import org.example.entities.UserLimit;
 import org.example.enums.ReservationStatus;
 import org.example.errors.NotEnoughMoney;
 import org.example.errors.OperationDoesntExist;
+import org.example.errors.OperationExist;
 import org.example.errors.ReservationWrongStatus;
 import org.example.repository.LimitReservationRepository;
 import org.example.repository.UserLimitRepository;
@@ -37,8 +38,8 @@ public class LimitService {
     @Transactional
     public void reserve(ReserveRequest reserveRequest) {
 
-        if (!reservationRepository.existsById(reserveRequest.operationId())) {
-            throw new OperationDoesntExist("нет операции с UUID", reserveRequest.operationId());
+        if (reservationRepository.existsById(reserveRequest.operationId())) {
+            throw new OperationExist("операция с UUID уже существует", reserveRequest.operationId());
         }
 
         UserLimit user = userLimitRepository.findById(reserveRequest.userId())
