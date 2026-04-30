@@ -1,6 +1,8 @@
 package org.example;
 
 import jakarta.transaction.Transactional;
+import org.example.dto.ReserveRequest;
+import org.example.errors.NotEnoughMoney;
 import org.example.service.LimitService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +26,8 @@ class LimitServiceTest {
         BigDecimal bigAmount = new BigDecimal("200000.00"); // Больше дефолтного
         UUID opId = UUID.randomUUID();
 
-        assertThrows(RuntimeException.class, () -> {
-            limitService.reserve(userId, bigAmount, opId);
+        assertThrows(NotEnoughMoney.class, () -> {
+            limitService.reserve(new ReserveRequest(userId, bigAmount, opId));
         });
     }
 }

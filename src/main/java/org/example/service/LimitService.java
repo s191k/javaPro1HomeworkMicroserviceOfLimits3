@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.config.GlobalSettingsProperties;
 import org.example.dto.LimitResponse;
+import org.example.dto.OperationRequest;
+import org.example.dto.ReserveRequest;
 import org.example.entities.LimitReservation;
 import org.example.entities.UserLimit;
 import org.example.enums.ReservationStatus;
@@ -33,32 +35,33 @@ public class LimitService {
     }
 
     @Transactional
-    public void reserve(Long userId, BigDecimal amount, UUID operationId) {
+    public void reserve(ReserveRequest reserveRequest) {
 
-        if (reservationRepository.existsById(operationId)) {
-            throw new OperationDoesntExist("нет операции с UUID", operationId);
+        if (reservationRepository.existsById(reserveRequest.operationId())) {
+            throw new OperationDoesntExist("нет операции с UUID", reserveRequest.operationId());
         }
 
-        UserLimit user = userLimitRepository.findById(userId)
+        UserLimit user = userLimitRepository.findById(reserveRequest.userId())
                 .orElseGet(() -> {
                     BigDecimal defaultLimit = globalSettingsProperties.getDefaultLimitValue();
-                    return userLimitRepository.save(new UserLimit(userId, defaultLimit, BigDecimal.ZERO));
+                    return userLimitRepository.save(new UserLimit(reserveRequest.userId(), defaultLimit, BigDecimal.ZERO));
                 });
 
-        int updatedRows = userLimitRepository.reserve(user.getId(), amount);
+        int updatedRows = userLimitRepository.reserve(user.getId(), reserveRequest.amount());
 
         if (updatedRows == 0) {
-            throw new NotEnoughMoney("Недостаточно средств", amount);
+            throw new NotEnoughMoney("Недостаточно средств", reserveRequest.amount());
         }
 
-        LimitReservation reservation = new LimitReservation(operationId, user.getId(), amount, ReservationStatus.PENDING, LocalDateTime.now());
+        LimitReservation reservation = new LimitReservation(reserveRequest.operationId(), user.getId(), reserveRequest.amount(),
+                ReservationStatus.PENDING, LocalDateTime.now());
         reservationRepository.save(reservation);
     }
 
     @Transactional
-    public void confirm(UUID operationId) {
-        LimitReservation reservation = reservationRepository.findById(operationId)
-                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationId));
+    public void confirm(OperationRequest operationRequest) {
+        LimitReservation reservation = reservationRepository.findById(operationRequest.operationId())
+                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationRequest.operationId()));
 
         if (reservation.getStatus() != ReservationStatus.PENDING) {
             throw new ReservationWrongStatus("Статус операции отличается от ожидаемого", ReservationStatus.PENDING, reservation.getStatus());
@@ -70,9 +73,9 @@ public class LimitService {
     }
 
     @Transactional
-    public void cancel(UUID operationId) {
-        LimitReservation reservation = reservationRepository.findById(operationId)
-                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationId));
+    public void cancel(OperationRequest operationRequest) {
+        LimitReservation reservation = reservationRepository.findById(operationRequest.operationId())
+                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationRequest.operationId()));
 
         if (reservation.getStatus() != ReservationStatus.PENDING) {
             throw new ReservationWrongStatus("Статус операции отличается от ожидаемого", ReservationStatus.PENDING, reservation.getStatus());
@@ -88,7 +91,7 @@ public class LimitService {
         return userLimitRepository.findById(userId)
                 .map(u -> new LimitResponse(u.getId(), u.getAvailableBalance(), u.getReservedSum()))
                 .orElseGet(() -> {
-                    this.reserve(userId, BigDecimal.ZERO, UUID.randomUUID());
+                    this.reserve(new ReserveRequest(userId, BigDecimal.ZERO, UUID.randomUUID()));
                     return getBalance(userId);
                 });
     }
