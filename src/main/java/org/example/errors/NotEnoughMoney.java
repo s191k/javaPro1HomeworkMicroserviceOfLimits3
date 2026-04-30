@@ -1,7 +1,10 @@
 package org.example.errors;
 
+import lombok.Getter;
+
 import java.math.BigDecimal;
 
+@Getter
 public class NotEnoughMoney extends RuntimeException {
 
     private final BigDecimal currentBalance;
@@ -9,10 +12,6 @@ public class NotEnoughMoney extends RuntimeException {
     public NotEnoughMoney(String message, BigDecimal currentBalance) {
         super(message);
         this.currentBalance = currentBalance;
-    }
-
-    public BigDecimal getCurrentBalance() {
-        return currentBalance;
     }
 
 }

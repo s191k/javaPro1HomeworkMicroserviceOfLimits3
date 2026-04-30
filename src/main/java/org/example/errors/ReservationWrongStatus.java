@@ -1,7 +1,9 @@
 package org.example.errors;
 
+import lombok.Getter;
 import org.example.enums.ReservationStatus;
 
+@Getter
 public class ReservationWrongStatus extends RuntimeException {
 
     private final ReservationStatus expectedStatus;
@@ -13,11 +15,4 @@ public class ReservationWrongStatus extends RuntimeException {
         this.operationStatus = operationStatus;
     }
 
-    public ReservationStatus getExpectedStatus() {
-        return expectedStatus;
-    }
-
-    public ReservationStatus getOperationStatus() {
-        return operationStatus;
-    }
 }

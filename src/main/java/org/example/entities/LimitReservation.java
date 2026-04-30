@@ -18,15 +18,21 @@ import java.util.UUID;
 @AllArgsConstructor
 @Table(name = "limit_reservations")
 public class LimitReservation {
+
     @Id
+    @Column(name = "operation_id")
     private UUID operationId;
 
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
 
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }
