@@ -19,9 +19,9 @@ public class LimitController {
     }
 
     @PostMapping("/reserve")
-    public ResponseEntity<String> reserve(@RequestBody ReserveRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public void reserve(@RequestBody ReserveRequest request) {
         limitService.reserve(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Reserved successfully");
     }
 
     @PostMapping("/confirm")
