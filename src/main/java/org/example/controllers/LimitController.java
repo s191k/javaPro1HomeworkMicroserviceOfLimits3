@@ -5,7 +5,6 @@ import org.example.dto.LimitResponse;
 import org.example.dto.ReserveRequest;
 import org.example.service.LimitService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
