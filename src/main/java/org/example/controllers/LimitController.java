@@ -25,15 +25,13 @@ public class LimitController {
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity<String> confirm(@RequestBody OperationRequest request) {
+    public void confirm(@RequestBody OperationRequest request) {
         limitService.confirm(request);
-        return ResponseEntity.ok("Confirmed successfully");
     }
 
     @PostMapping("/cancel")
-    public ResponseEntity<String> cancel(@RequestBody OperationRequest request) {
+    public void cancel(@RequestBody OperationRequest request) {
         limitService.cancel(request);
-        return ResponseEntity.ok("Cancelled successfully");
     }
 
     @GetMapping("/{userId}")
