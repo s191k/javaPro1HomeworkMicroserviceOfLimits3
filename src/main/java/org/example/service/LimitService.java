@@ -1,0 +1,100 @@
+package org.example.service;
+
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.example.config.GlobalSettingsProperties;
+import org.example.dto.LimitResponse;
+import org.example.dto.OperationRequest;
+import org.example.dto.ReserveRequest;
+import org.example.entities.LimitReservation;
+import org.example.entities.UserLimit;
+import org.example.enums.ReservationStatus;
+import org.example.errors.NotEnoughMoney;
+import org.example.errors.OperationDoesntExist;
+import org.example.errors.OperationExist;
+import org.example.errors.ReservationWrongStatus;
+import org.example.repository.LimitReservationRepository;
+import org.example.repository.UserLimitRepository;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Slf4j
+@Service
+public class LimitService {
+
+    private final UserLimitRepository userLimitRepository;
+    private final LimitReservationRepository reservationRepository;
+    private final GlobalSettingsProperties globalSettingsProperties;
+
+    public LimitService(UserLimitRepository userLimitRepository, LimitReservationRepository reservationRepository, GlobalSettingsProperties globalSettingsProperties) {
+        this.userLimitRepository = userLimitRepository;
+        this.reservationRepository = reservationRepository;
+        this.globalSettingsProperties = globalSettingsProperties;
+    }
+
+    @Transactional
+    public void reserve(ReserveRequest reserveRequest) {
+
+        if (reservationRepository.existsById(reserveRequest.operationId())) {
+            throw new OperationExist("операция с UUID уже существует", reserveRequest.operationId());
+        }
+
+        UserLimit user = userLimitRepository.findById(reserveRequest.userId())
+                .orElseGet(() -> {
+                    BigDecimal defaultLimit = globalSettingsProperties.getDefaultLimitValue();
+                    return userLimitRepository.save(new UserLimit(reserveRequest.userId(), defaultLimit, BigDecimal.ZERO));
+                });
+
+        int updatedRows = userLimitRepository.reserve(user.getId(), reserveRequest.amount());
+
+        if (updatedRows == 0) {
+            throw new NotEnoughMoney("Недостаточно средств", reserveRequest.amount());
+        }
+
+        LimitReservation reservation = new LimitReservation(reserveRequest.operationId(), user.getId(), reserveRequest.amount(),
+                ReservationStatus.PENDING, LocalDateTime.now());
+        reservationRepository.save(reservation);
+    }
+
+    @Transactional
+    public void confirm(OperationRequest operationRequest) {
+        LimitReservation reservation = reservationRepository.findById(operationRequest.operationId())
+                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationRequest.operationId()));
+
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            throw new ReservationWrongStatus("Статус операции отличается от ожидаемого", ReservationStatus.PENDING, reservation.getStatus());
+        }
+
+        reservation.setStatus(ReservationStatus.CONFIRMED);
+        reservationRepository.save(reservation);
+        userLimitRepository.confirm(reservation.getUserId(), reservation.getAmount());
+    }
+
+    @Transactional
+    public void cancel(OperationRequest operationRequest) {
+        LimitReservation reservation = reservationRepository.findById(operationRequest.operationId())
+                .orElseThrow(() -> new OperationDoesntExist("нет операции с UUID", operationRequest.operationId()));
+
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            throw new ReservationWrongStatus("Статус операции отличается от ожидаемого", ReservationStatus.PENDING, reservation.getStatus());
+        }
+
+        reservation.setStatus(ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
+        userLimitRepository.cancel(reservation.getUserId(), reservation.getAmount());
+    }
+
+    @Transactional
+    public LimitResponse getBalance(Long userId) {
+        return userLimitRepository.findById(userId)
+                .map(u -> new LimitResponse(u.getId(), u.getAvailableBalance(), u.getReservedSum()))
+                .orElseGet(() -> {
+                    this.reserve(new ReserveRequest(userId, BigDecimal.ZERO, UUID.randomUUID()));
+                    return getBalance(userId);
+                });
+    }
+
+}
